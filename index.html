@@ -4,6 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>National Agriculture Farm 🌽 — Idle NFT Game</title>
+<script>
+(function setFavicon() {
+  const fc = document.createElement('canvas');
+  fc.width = fc.height = 64;
+  const fx = fc.getContext('2d');
+  fx.fillStyle = '#06080f';
+  fx.fillRect(0, 0, 64, 64);
+  const gB = fx.createRadialGradient(32, 0, 0, 32, 0, 50);
+  gB.addColorStop(0, 'rgba(26,79,196,0.65)');
+  gB.addColorStop(1, 'rgba(26,79,196,0)');
+  fx.fillStyle = gB; fx.fillRect(0, 0, 64, 64);
+  const gR = fx.createRadialGradient(32, 64, 0, 32, 64, 45);
+  gR.addColorStop(0, 'rgba(191,10,48,0.55)');
+  gR.addColorStop(1, 'rgba(191,10,48,0)');
+  fx.fillStyle = gR; fx.fillRect(0, 0, 64, 64);
+  function applyFavicon() {
+    fx.textAlign = 'center'; fx.textBaseline = 'alphabetic'; fx.lineJoin = 'round';
+    const fsA = 10;
+    fx.font = `900 italic ${fsA}px 'Bangers', Impact, sans-serif`;
+    fx.strokeStyle = '#fff'; fx.lineWidth = 1.8; fx.strokeText('AGRICULTURE', 32, 29);
+    const gA = fx.createLinearGradient(32, 19, 32, 30);
+    gA.addColorStop(0, '#7aaaff'); gA.addColorStop(1, '#1A4FC4');
+    fx.fillStyle = gA; fx.fillText('AGRICULTURE', 32, 29);
+    const lw = 30, ly = 32, lx = 32 - lw/2, seg = lw/3;
+    fx.fillStyle = '#1A4FC4'; fx.fillRect(lx, ly, seg, 2);
+    fx.fillStyle = '#BF0A30'; fx.fillRect(lx+seg, ly, seg, 2);
+    fx.fillStyle = '#fff'; fx.fillRect(lx+seg*2, ly, seg, 2);
+    const fsF = 28;
+    fx.font = `900 italic ${fsF}px 'Bangers', Impact, sans-serif`;
+    fx.strokeStyle = '#fff'; fx.lineWidth = 3.5; fx.strokeText('FARM', 32, 59);
+    const gF = fx.createLinearGradient(32, 31, 32, 60);
+    gF.addColorStop(0, '#FF5070'); gF.addColorStop(1, '#BF0A30');
+    fx.fillStyle = gF; fx.fillText('FARM', 32, 59);
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+    link.type = 'image/png'; link.href = fc.toDataURL('image/png');
+  }
+  document.fonts.ready.then(applyFavicon);
+})();
+</script>
 <script src="https://unpkg.com/@solana/web3.js@1.98.0/lib/index.iife.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Baloo+2:wght@400;700;800&family=Bubblegum+Sans&family=Playfair+Display:ital,wght@1,400;1,700&family=Cinzel:wght@400;700&family=Bungee+Shade&family=Creepster&family=Bangers&display=swap" rel="stylesheet">
@@ -396,7 +436,7 @@ canvas#gc {
   <div class="game-section" id="gameSection">
     <canvas id="gc"></canvas>
     <div class="speech" id="speech">"Welcome to the National Agriculture Farm. Biggest farm. Most beautiful."</div>
-    <div class="activity" id="log"></div>
+    <div class="activity" id="log" style="display:none"></div>
   </div>
 
   <!-- SIDE PANEL -->
@@ -2957,13 +2997,7 @@ function updateUI() {
 }
 
 function addLog(msg) {
-  const log  = document.getElementById('log');
-  const time = new Date().toLocaleTimeString();
-  const row  = document.createElement('div');
-  row.className   = 'arow';
-  row.textContent = `[${time}]  ${msg}`;
-  log.insertBefore(row, log.firstChild);
-  if (log.children.length > 25) log.removeChild(log.lastChild);
+  // log disabled
 }
 
 // ════════════════════════════════════════════════
