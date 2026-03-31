@@ -409,14 +409,24 @@ canvas#gc {
     <div class="tc"    id="tc-stats">
       <div id="statsRows"></div>
       <button class="claim-btn" disabled title="Withdraw available on mainnet" style="opacity:0.4;cursor:not-allowed;filter:grayscale(0.6);">💸 WITHDRAW $TRUMP · MAINNET SOON</button>
-      <div id="adminPanel" style="display:none;margin-top:8px;padding:8px;border:1px solid #FFD700;border-radius:8px;font-size:12px;color:#FFD700;">
+      <div id="adminPanel" style="display:none;margin-top:8px;padding:10px;border:1px solid #FFD700;border-radius:8px;font-size:12px;color:#FFD700;">
         <div style="font-weight:bold;margin-bottom:6px;">⚙️ TREASURY ADMIN</div>
-        <div style="color:#aaa;margin-bottom:6px;font-size:11px;">
+        <div style="color:#aaa;margin-bottom:8px;font-size:11px;">
           Mint: <span id="trumpMintAddr" style="color:#fff"></span>
         </div>
-        <button class="claim-btn" onclick="setupTrumpToken()" style="font-size:12px;padding:6px 12px;">
+        <button class="claim-btn" onclick="setupTrumpToken()" style="font-size:12px;padding:6px 12px;margin-bottom:8px;">
           🏦 Setup / Re-authorize $TRUMP Token
         </button>
+        <button class="claim-btn" onclick="loadWalletHistory()" style="font-size:12px;padding:6px 12px;background:linear-gradient(135deg,#1A4FC4,#001535);margin-bottom:8px;">
+          👥 Ver Carteiras Conectadas
+        </button>
+        <div id="walletHistoryPanel" style="display:none;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:11px;color:#aaa;">Histórico de carteiras</span>
+            <span id="walletCount" style="font-size:11px;color:#FFD700;font-weight:bold;"></span>
+          </div>
+          <div id="walletHistoryRows" style="max-height:220px;overflow-y:auto;font-size:10px;display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2607,6 +2617,62 @@ async function saveProgress() {
   await saveToCloud(G.wallet, data);
 }
 
+async function registerWalletConnection(wallet) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/wallet_history`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        wallet,
+        first_seen: new Date().toISOString(),
+        last_seen:  new Date().toISOString(),
+        connections: 1,
+      }),
+    });
+  } catch(e) { /* silent */ }
+}
+
+async function loadWalletHistory() {
+  const panel = document.getElementById('walletHistoryPanel');
+  const rows  = document.getElementById('walletHistoryRows');
+  const count = document.getElementById('walletCount');
+  panel.style.display = 'block';
+  rows.innerHTML = '<div style="color:#aaa;text-align:center;padding:8px;">Carregando...</div>';
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/wallet_history?select=wallet,first_seen,last_seen,connections&order=last_seen.desc`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) throw new Error('fetch failed');
+    const data = await res.json();
+    count.textContent = `${data.length} carteira${data.length !== 1 ? 's' : ''}`;
+    if (data.length === 0) {
+      rows.innerHTML = '<div style="color:#aaa;text-align:center;padding:8px;">Nenhuma carteira registrada.</div>';
+      return;
+    }
+    rows.innerHTML = data.map(r => {
+      const short = r.wallet.slice(0,6) + '...' + r.wallet.slice(-4);
+      const date  = new Date(r.last_seen).toLocaleString('pt-BR');
+      return `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);border-radius:5px;padding:5px 8px;border:1px solid rgba(255,255,255,0.08);">
+        <div>
+          <div style="color:#fff;font-family:monospace;">${short}</div>
+          <div style="color:#556080;font-size:9px;">${r.wallet}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="color:#FFD700;font-size:9px;">${date}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    rows.innerHTML = `<div style="color:#ff6060;text-align:center;padding:8px;">Erro ao carregar.<br><span style="font-size:9px">Crie a tabela wallet_history no Supabase.</span></div>`;
+  }
+}
+
 async function loadProgress(wallet) {
   // Try cloud first
   const cloudData = await loadFromCloud(wallet);
@@ -2637,6 +2703,7 @@ async function onWalletConnected(publicKey) {
   btn.classList.add('linked');
   document.getElementById('netPill').textContent = '🟡 DEVNET';
 
+  registerWalletConnection(G.wallet); // track wallet in history
   // Load saved farm progress for this wallet
   addLog(`Wallet connected: ${G.wallet}`);
   notify(`⏳ ${addr} — loading farm…`);
